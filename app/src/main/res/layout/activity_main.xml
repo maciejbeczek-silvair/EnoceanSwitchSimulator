@@ -72,6 +72,25 @@
                 app:layout_constraintTop_toTopOf="parent" />
         </GridLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:hint="Bluetooth MAC address of your device"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buttons_grid_layout">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/address_mac_input"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/generate_qr_code_button"
             android:layout_width="wrap_content"
@@ -80,7 +99,7 @@
             android:text="generate qr code"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/buttons_grid_layout" />
+            app:layout_constraintTop_toBottomOf="@id/input_layout" />
 
         <ImageView
             android:id="@+id/qr_code_image"

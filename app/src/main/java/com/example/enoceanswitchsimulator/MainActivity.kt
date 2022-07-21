@@ -69,10 +69,9 @@ class MainActivity : AppCompatActivity() {
         buttons.forEach {
             handleButton(
                 it,
-                { sendByMotionDown(it.text.toString()) },
+                { startAdvertising() },
                 { sendByMotionUp(it.text.toString()) })
         }
-
 
         handleGenerateQrCodeButton()
     }
@@ -120,20 +119,32 @@ class MainActivity : AppCompatActivity() {
 
             val writer = QRCodeWriter()
 
-            try {
-                val bitMatrix = writer.encode("tutaj link z info", BarcodeFormat.QR_CODE, 512, 512)
-                val widthMatrix = bitMatrix.width
-                val heightMatrix = bitMatrix.height
-                val bmp = Bitmap.createBitmap(widthMatrix, heightMatrix, Bitmap.Config.RGB_565)
+            if (binding.addressMacInput.text.isNullOrBlank().not()) {
+                val key = "00112233445566778899AABBCCDDEEFF"
+                val endProduct = "ESRPB"
+                val content = "30S${binding.addressMacInput.text}+Z$key+30P$endProduct+2PDA02+S03123456"
+                try {
+                    val bitMatrix =
+                        writer.encode(content, BarcodeFormat.QR_CODE, 512, 512)
+                    val widthMatrix = bitMatrix.width
+                    val heightMatrix = bitMatrix.height
+                    val bmp = Bitmap.createBitmap(widthMatrix, heightMatrix, Bitmap.Config.RGB_565)
 
-                for (x in 0 until widthMatrix) {
-                    for (y in 0 until heightMatrix) {
-                        bmp.setPixel(x, y, if (bitMatrix.get(x, y)) Color.BLACK else Color.WHITE)
+                    for (x in 0 until widthMatrix) {
+                        for (y in 0 until heightMatrix) {
+                            bmp.setPixel(
+                                x,
+                                y,
+                                if (bitMatrix.get(x, y)) Color.BLACK else Color.WHITE
+                            )
+                        }
                     }
+                    binding.qrCodeImage.setImageBitmap(bmp)
+                } catch (e: WriterException) {
+                    e.printStackTrace()
                 }
-                binding.qrCodeImage.setImageBitmap(bmp)
-            } catch (e: WriterException) {
-                e.printStackTrace()
+            } else {
+                Toast.makeText(this, "Please add Bluetooth MAC address of your device", Toast.LENGTH_SHORT).show()
             }
         }
     }
