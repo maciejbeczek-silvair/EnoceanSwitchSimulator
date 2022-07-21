@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">EnoceanSwitchSimulator</string>
+    <string name="ble_uuid">11DF5AF0-CCA3-4E5A-956E-98DAA0BA7940</string>
 </resources>
