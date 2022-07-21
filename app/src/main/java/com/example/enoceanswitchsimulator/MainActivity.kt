@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
+import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -32,61 +33,75 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
-    lateinit var buttons: List<View>
+    lateinit var buttons: List<MaterialButton>
+    lateinit var advertiser: BluetoothLeAdvertiser
+
+    private val advertiseSettings = AdvertiseSettings.Builder()
+        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+        .setConnectable(false)
+        .build()
+
+    private val advertisingCallback = object : AdvertiseCallback() {
+        override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
+            super.onStartSuccess(settingsInEffect)
+        }
+
+        override fun onStartFailure(errorCode: Int) {
+            Log.e("BLE", "Advertising onStartFailure: $errorCode")
+            super.onStartFailure(errorCode)
+        }
+    }
+
+    private val enoceanManufacturerId = 0xDA03
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        initBluetoothAdvertiser()
+
         with(binding) {
             buttons = listOf(firstButton, secondButton, thirdButton, fourthButton)
         }
 
-        buttons.forEach { it as MaterialButton
-            handleButton(it, { sendByMotionDown(it.text.toString()) }, {sendByMotionUp(it.text.toString()) })
+        buttons.forEach {
+            handleButton(
+                it,
+                { sendByMotionDown(it.text.toString()) },
+                { sendByMotionUp(it.text.toString()) })
         }
 
+
         handleGenerateQrCodeButton()
-        buildAdvertisingSettings()
     }
 
-    private fun buildAdvertisingSettings() {
-        checkBluetoothPermission()
+    private fun initBluetoothAdvertiser() {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        if (bluetoothManager.adapter.isMultipleAdvertisementSupported.not()) {
+/*        if (bluetoothManager.adapter.isMultipleAdvertisementSupported.not()) {
             Toast.makeText(this, "Multiple advertisement not supported", Toast.LENGTH_LONG).show()
             buttons.forEach {
                 it.isEnabled = false
             }
-        }
+        }*/
 
-        val advertiser = bluetoothManager.adapter.bluetoothLeAdvertiser
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-            .setConnectable(false)
-            .build()
+        advertiser = bluetoothManager.adapter.bluetoothLeAdvertiser
+    }
 
-        val pUuid = ParcelUuid(UUID.fromString(getString(R.string.ble_uuid)))
+    private fun startAdvertising() {
+        checkBluetoothPermission()
+
         val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(true)
-            .addServiceUuid(pUuid)
-            .addServiceData(pUuid, "Data".toByteArray(Charset.forName("UTF-8")))
+            .addManufacturerData(enoceanManufacturerId, "00".toByteArray())
             .build()
 
-        val advertisingCallback = object : AdvertiseCallback() {
-            override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
-                super.onStartSuccess(settingsInEffect)
-            }
+        advertiser.startAdvertising(advertiseSettings, data, advertisingCallback)
+    }
 
-            override fun onStartFailure(errorCode: Int) {
-                Log.e("BLE", "Advertising onStartFailure: $errorCode")
-                super.onStartFailure(errorCode)
-            }
-        }
-
-        advertiser.startAdvertising(settings, data, advertisingCallback)
+    private fun stopAdvertising() {
+        checkBluetoothPermission()
+        advertiser.stopAdvertising(advertisingCallback)
     }
 
     private fun handleGenerateQrCodeButton() {
